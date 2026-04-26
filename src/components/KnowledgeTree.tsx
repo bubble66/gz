@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, ChevronDown, BookOpen, Zap, Layers, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Node, NodeType, NODES } from '../data/knowledgeMap';
+import { Node, NodeType } from '../data/knowledgeMap';
 
 interface TreeProps {
   onNodeClick: (node: Node) => void;
+  nodes: Node[];
 }
 
-export default function KnowledgeTree({ onNodeClick }: TreeProps) {
+export default function KnowledgeTree({ onNodeClick, nodes }: TreeProps) {
   const [expandedL1, setExpandedL1] = useState<string[]>(['函数的概念与性质']);
   const [expandedL2, setExpandedL2] = useState<string[]>(['函数的概念', '单调性']);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,11 +25,11 @@ export default function KnowledgeTree({ onNodeClick }: TreeProps) {
     );
   };
 
-  const filteredNodes = NODES.filter(n => 
+  const filteredNodes = nodes.filter(n => 
     n.name.includes(searchQuery) || n.definition.includes(searchQuery)
   );
 
-  const l1Categories = Array.from(new Set(NODES.map(n => n.l1)));
+  const l1Categories = Array.from(new Set(nodes.map(n => n.l1)));
 
   const getTypeIcon = (type: NodeType) => {
     switch (type) {
@@ -64,7 +65,7 @@ export default function KnowledgeTree({ onNodeClick }: TreeProps) {
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         <div className="space-y-4">
           {l1Categories.map((l1) => {
-            const l2Categories = Array.from(new Set(NODES.filter(n => n.l1 === l1).map(n => n.l2)));
+            const l2Categories = Array.from(new Set(nodes.filter(n => n.l1 === l1).map(n => n.l2)));
             const isL1Expanded = expandedL1.includes(l1) || searchQuery.length > 0;
 
             return (

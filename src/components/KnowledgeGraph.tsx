@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { useEffect, useRef, useState } from 'react';
-import { Node, NodeType, NODES, Relation, RELATIONS } from '../data/knowledgeMap';
+import { Node, NodeType, Relation } from '../data/knowledgeMap';
 
 interface GraphNode extends d3.SimulationNodeDatum, Node {}
 interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
@@ -39,7 +39,17 @@ export interface KnowledgeGraphHandle {
   focusNode: (nodeId: string) => void;
 }
 
-export default function KnowledgeGraph({ onNodeClick, focusedNodeId }: { onNodeClick: (node: Node) => void, focusedNodeId?: string | null }) {
+export default function KnowledgeGraph({ 
+  onNodeClick, 
+  focusedNodeId, 
+  nodes: externalNodes, 
+  relations: externalRelations 
+}: { 
+  onNodeClick: (node: Node) => void, 
+  focusedNodeId?: string | null,
+  nodes: Node[],
+  relations: Relation[]
+}) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<GraphNode, undefined> | null>(null);
@@ -71,8 +81,8 @@ export default function KnowledgeGraph({ onNodeClick, focusedNodeId }: { onNodeC
     svg.call(zoom);
 
     // Prepare data
-    const nodes: GraphNode[] = NODES.map(d => ({ ...d }));
-    const links: GraphLink[] = RELATIONS.map(d => ({
+    const nodes: GraphNode[] = externalNodes.map(d => ({ ...d }));
+    const links: GraphLink[] = externalRelations.map(d => ({
       source: d.source,
       target: d.target,
       relation: d.relation
@@ -162,7 +172,7 @@ export default function KnowledgeGraph({ onNodeClick, focusedNodeId }: { onNodeC
     }
 
     return () => simulation.stop();
-  }, []);
+  }, [externalNodes, externalRelations]);
 
   // Handle focusing from external prop
   useEffect(() => {

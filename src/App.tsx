@@ -4,33 +4,39 @@
  */
 
 import { AnimatePresence, motion } from 'motion/react';
-import { Info, Search, X, BookOpen, Layers, Zap, Network, LayoutGrid, ListTree } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Info, Search, X, BookOpen, Layers, Zap, Network, LayoutGrid, ListTree, Download, Upload, Trash2 } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
 import KnowledgeGraph from './components/KnowledgeGraph';
 import KnowledgeTree from './components/KnowledgeTree';
-import { Node, NODES, RELATIONS } from './data/knowledgeMap';
+import { Node, NODES, RELATIONS, Relation } from './data/knowledgeMap';
+import { exportToCSV, parseCSV } from './lib/csvUtils';
 
 export default function App() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  const [nodes, setNodes] = useState<Node[]>(NODES);
+  const [relations, setRelations] = useState<Relation[]>(RELATIONS);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const relationInputRef = useRef<HTMLInputElement>(null);
 
   const nodeStats = useMemo(() => {
     return {
-      Concept: NODES.filter(n => n.type === 'Concept').length,
-      Rule: NODES.filter(n => n.type === 'Rule').length,
-      Representation: NODES.filter(n => n.type === 'Representation').length,
+      Concept: nodes.filter(n => n.type === 'Concept').length,
+      Rule: nodes.filter(n => n.type === 'Rule').length,
+      Representation: nodes.filter(n => n.type === 'Representation').length,
     };
-  }, []);
+  }, [nodes]);
 
   const relatedNodes = useMemo(() => {
     if (!selectedNode) return [];
     
-    return RELATIONS
+    return relations
       .filter(r => r.source === selectedNode.id || r.target === selectedNode.id)
       .map(r => {
         const isSource = r.source === selectedNode.id;
         const otherId = isSource ? r.target : r.source;
-        const node = NODES.find(n => n.id === otherId);
+        const node = nodes.find(n => n.id === otherId);
         if (!node) return null;
         
         return {
@@ -41,14 +47,86 @@ export default function App() {
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [selectedNode]);
+  }, [selectedNode, nodes, relations]);
 
-  const getRelationStyle = (type: any) => {
+  const handleExportNodes = () => {
+    exportToCSV(nodes, 'knowledge_nodes.csv');
+  };
+
+  const handleExportRelations = () => {
+    exportToCSV(relations, 'knowledge_relations.csv');
+  };
+
+  const handleImportNodes = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const importedNodes = await parseCSV<Node>(file);
+        if (confirm('是否覆盖当前所有知识点？点击“取消”将追加导入。')) {
+          setNodes(importedNodes);
+        } else {
+          setNodes(prev => {
+            const newNodes = [...prev];
+            importedNodes.forEach(innd => {
+              if (!newNodes.find(pnd => pnd.id === innd.id)) {
+                newNodes.push(innd);
+              }
+            });
+            return newNodes;
+          });
+        }
+      } catch (error) {
+        alert('导入失败，请检查文件格式。');
+      }
+      e.target.value = '';
+    }
+  };
+
+  const handleImportRelations = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const importedRelations = await parseCSV<Relation>(file);
+        if (confirm('是否覆盖当前所有关联关系？点击“取消”将追加导入。')) {
+          setRelations(importedRelations);
+        } else {
+          setRelations(prev => [...prev, ...importedRelations]);
+        }
+      } catch (error) {
+        alert('导入失败，请检查文件格式。');
+      }
+      e.target.value = '';
+    }
+  };
+
+  const getRelationStyle = (type: any, isForward: boolean) => {
     switch(type) {
-      case 'belongs_to': return { color: 'text-indigo-600', bg: 'bg-indigo-600', line: 'solid', label: '包含于 / 属于' };
-      case 'prerequisite_of': return { color: 'text-amber-600', bg: 'bg-amber-600', line: 'solid', label: '前置 / 延伸' };
-      case 'related_to': return { color: 'text-emerald-600', bg: 'bg-emerald-600', line: 'dashed', label: '相关 / 引用' };
-      default: return { color: 'text-slate-600', bg: 'bg-slate-600', line: 'solid', label: '关联' };
+      case 'belongs_to': 
+        return { 
+          color: 'text-indigo-600', 
+          bg: 'bg-indigo-600', 
+          line: 'solid', 
+          label: isForward ? '父级概念' : '包含子项',
+          desc: isForward ? '当前知识点隶属于此分类' : '此分类下包含的原子知识点'
+        };
+      case 'prerequisite_of': 
+        return { 
+          color: 'text-amber-600', 
+          bg: 'bg-amber-600', 
+          line: 'solid', 
+          label: isForward ? '后续延伸' : '前置基础',
+          desc: isForward ? '基于此知识点进一步推导产生' : '学习此篇章必备的先修知识'
+        };
+      case 'related_to': 
+        return { 
+          color: 'text-emerald-600', 
+          bg: 'bg-emerald-600', 
+          line: 'dashed', 
+          label: '横向关联',
+          desc: '知识点间存在性质交叉或对比关系'
+        };
+      default: 
+        return { color: 'text-slate-600', bg: 'bg-slate-600', line: 'solid', label: '关联', desc: '' };
     }
   };
 
@@ -69,10 +147,57 @@ export default function App() {
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">高中数学 · 函数的概念与性质</p>
         </div>
         
-        <div className="flex-1 overflow-hidden">
-          <KnowledgeTree onNodeClick={handleNodeSelect} />
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <KnowledgeTree onNodeClick={handleNodeSelect} nodes={nodes} />
         </div>
 
+        <div className="p-4 border-t border-gray-50 bg-gray-50/30 space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:border-indigo-200 hover:text-indigo-600 transition-all shadow-sm"
+            >
+              <Upload className="w-3 h-3" /> 导入知识点
+            </button>
+            <button 
+              onClick={handleExportNodes}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:border-indigo-200 hover:text-indigo-600 transition-all shadow-sm"
+            >
+              <Download className="w-3 h-3" /> 导出知识点
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={() => relationInputRef.current?.click()}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-600 transition-all shadow-sm"
+            >
+              <Upload className="w-3 h-3" /> 导入关系
+            </button>
+            <button 
+              onClick={handleExportRelations}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 hover:border-emerald-200 hover:text-emerald-600 transition-all shadow-sm"
+            >
+              <Download className="w-3 h-3" /> 导出关系
+            </button>
+          </div>
+
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImportNodes} 
+            accept=".csv" 
+            className="hidden" 
+          />
+          <input 
+            type="file" 
+            ref={relationInputRef} 
+            onChange={handleImportRelations} 
+            accept=".csv" 
+            className="hidden" 
+          />
+        </div>
+          
         <div className="p-4 border-t border-gray-50 grid grid-cols-3 gap-2 bg-gray-50/30">
           <div className="text-center">
             <div className="text-[9px] text-slate-400 font-bold uppercase">概念</div>
@@ -108,7 +233,12 @@ export default function App() {
           </div>
         </div>
 
-        <KnowledgeGraph onNodeClick={handleNodeSelect} focusedNodeId={focusedNodeId} />
+        <KnowledgeGraph 
+          onNodeClick={handleNodeSelect} 
+          focusedNodeId={focusedNodeId} 
+          nodes={nodes} 
+          relations={relations} 
+        />
       </main>
 
       {/* Right Sidebar: Details & Relations */}
@@ -167,21 +297,21 @@ export default function App() {
                       <div className="flex gap-2">
                         <div className="flex items-center gap-1">
                           <div className="w-2 h-0.5 bg-indigo-500 rounded-full" />
-                          <span className="text-[9px] text-slate-400">属于</span>
+                          <span className="text-[9px] text-slate-400">隶属 (层级)</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-2 h-0.5 bg-amber-500 rounded-full" />
-                          <span className="text-[9px] text-slate-400">逻辑</span>
+                          <span className="text-[9px] text-slate-400">推导演进</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-2 h-0.5 border-b border-dashed border-emerald-500" />
-                          <span className="text-[9px] text-slate-400">相关</span>
+                          <span className="text-[9px] text-slate-400">横向关联</span>
                         </div>
                       </div>
                     </div>
                     <div className="space-y-2.5">
                       {relatedNodes.map(({ node: n, relationType, isForward }) => {
-                        const style = getRelationStyle(relationType);
+                        const style = getRelationStyle(relationType, isForward);
                         return (
                           <button 
                             key={n.id} 
@@ -194,8 +324,9 @@ export default function App() {
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
                                 <span className={`text-[9px] font-black uppercase tracking-tighter ${style.color}`}>
-                                  {isForward ? '指向' : '来自'} · {style.label}
+                                  {style.label}
                                 </span>
+                                <span className="text-[8px] text-slate-400 font-medium">{style.desc}</span>
                               </div>
                               {style.line === 'dashed' && (
                                 <div className="flex gap-1">
