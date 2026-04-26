@@ -1,14 +1,15 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ChevronDown, BookOpen, Zap, Layers, Search } from 'lucide-react';
+import { ChevronRight, ChevronDown, BookOpen, Zap, Layers, Search, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Node, NodeType } from '../data/knowledgeMap';
 
 interface TreeProps {
   onNodeClick: (node: Node) => void;
+  onAddNode: (l1: string, l2: string) => void;
   nodes: Node[];
 }
 
-export default function KnowledgeTree({ onNodeClick, nodes }: TreeProps) {
+export default function KnowledgeTree({ onNodeClick, onAddNode, nodes }: TreeProps) {
   const [expandedL1, setExpandedL1] = useState<string[]>(['函数的概念与性质']);
   const [expandedL2, setExpandedL2] = useState<string[]>(['函数的概念', '单调性']);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,18 +97,28 @@ export default function KnowledgeTree({ onNodeClick, nodes }: TreeProps) {
 
                         return (
                           <div key={l2} className="space-y-1">
-                            <button
-                              onClick={() => toggleL2(l2)}
-                              className="w-full flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-md transition-colors text-left group"
-                            >
-                              <div className="flex items-center gap-2">
+                            <div className="w-full flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-md transition-colors text-left group">
+                              <button
+                                onClick={() => toggleL2(l2)}
+                                className="flex items-center gap-2 flex-1"
+                              >
                                 <div className={`transition-transform duration-200 ${isL2Expanded ? 'rotate-90' : ''}`}>
                                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                                 </div>
                                 <span className="text-xs font-bold text-slate-600 tracking-tight">{l2}</span>
                                 <span className="text-[10px] text-slate-300 font-bold">{children.length}</span>
-                              </div>
-                            </button>
+                              </button>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onAddNode(l1, l2);
+                                }}
+                                className="p-1 text-slate-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="在当前分类下新增知识点"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
 
                             <AnimatePresence initial={false}>
                               {isL2Expanded && (
