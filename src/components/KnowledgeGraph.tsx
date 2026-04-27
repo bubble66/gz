@@ -33,6 +33,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   '二次函数': '#0369A1',      // Sky 700
   '一元二次方程': '#075985',    // Sky 800
   '一元二次不等式': '#0C4A6E',  // Sky 900
+  // 第四章：指数函数与对数函数
+  '指数': '#9333EA',             // Purple 600
+  '指数函数': '#7E22CE',         // Purple 700
+  '对数': '#059669',             // Emerald 600
+  '对数函数': '#047857',         // Emerald 700
+  '反函数': '#DB2777',           // Pink 600
+  '幂函数': '#2563EB',           // Blue 600
+  '函数的零点与方程的解': '#EA580C', // Orange 600
+  '二分法': '#D97706',           // Amber 600
+  '函数模型及其应用': '#4B5563',   // Gray 600
 };
 
 export interface KnowledgeGraphHandle {

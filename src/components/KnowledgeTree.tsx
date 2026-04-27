@@ -40,6 +40,14 @@ export default function KnowledgeTree({ onNodeClick, onAddNode, nodes }: TreePro
     }
   };
 
+  const getTypeLabel = (type: NodeType) => {
+    switch (type) {
+      case 'Concept': return '概';
+      case 'Rule': return '规';
+      case 'Representation': return '表';
+    }
+  };
+
   const getTypeColor = (type: NodeType) => {
     switch (type) {
       case 'Concept': return 'text-indigo-600 bg-indigo-50';
@@ -134,8 +142,9 @@ export default function KnowledgeTree({ onNodeClick, onAddNode, nodes }: TreePro
                                       onClick={() => onNodeClick(node)}
                                       className="w-full flex items-center gap-3 p-1.5 hover:bg-indigo-50/50 rounded-md transition-all text-left group border border-transparent hover:border-indigo-100"
                                     >
-                                      <div className={`p-1 rounded shrink-0 ${getTypeColor(node.type)}`}>
+                                      <div className={`p-1 rounded shrink-0 ${getTypeColor(node.type)} flex items-center gap-1`}>
                                         {getTypeIcon(node.type)}
+                                        <span className="text-[8px] font-bold leading-none">{getTypeLabel(node.type)}</span>
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h4 className="text-[11px] font-bold text-slate-600 truncate group-hover:text-indigo-600">{node.name}</h4>

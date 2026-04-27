@@ -4,7 +4,7 @@
  */
 
 import { AnimatePresence, motion } from 'motion/react';
-import { Info, Search, X, BookOpen, Layers, Zap, Network, LayoutGrid, ListTree, Download, Upload, Trash2 } from 'lucide-react';
+import { HelpCircle, Info, Search, X, BookOpen, Layers, Zap, Network, LayoutGrid, ListTree, Download, Upload, Trash2 } from 'lucide-react';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import KnowledgeGraph from './components/KnowledgeGraph';
 import KnowledgeTree from './components/KnowledgeTree';
@@ -22,6 +22,7 @@ export default function App() {
   const [isAddingNode, setIsAddingNode] = useState(false);
   const [newRelationData, setNewRelationData] = useState<{target: string, targetName: string, isBrowsing?: boolean, type: string, desc: string}>({ target: '', targetName: '', isBrowsing: false, type: 'parent', desc: '' });
   const [isAddingRelation, setIsAddingRelation] = useState(false);
+  const [showTypeInfo, setShowTypeInfo] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const relationInputRef = useRef<HTMLInputElement>(null);
@@ -327,12 +328,12 @@ export default function App() {
 
                   <div>
                     <label className="text-[9px] font-bold text-slate-400 uppercase mb-1 block ml-1">节点类型</label>
-                    <div className="grid grid-cols-3 gap-2">
-                       {[
-                         { val: 'Concept', label: '概念', desc: '核心定义' },
-                         { val: 'Rule', label: '规则', desc: '定理公式' },
-                         { val: 'Representation', label: '表示', desc: '图形表格' }
-                       ].map(t => (
+                      <div className="grid grid-cols-3 gap-2">
+                         {[
+                           { val: 'Concept', label: '概念', desc: '是什么' },
+                           { val: 'Rule', label: '规则', desc: '怎么用' },
+                           { val: 'Representation', label: '表示', desc: '怎么写' }
+                         ].map(t => (
                          <button
                            key={t.val}
                            onClick={() => setEditingNodeData({...editingNodeData, type: t.val as any})}
@@ -395,6 +396,7 @@ export default function App() {
           <div className="px-5 py-3 flex items-center justify-between">
             <h3 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">结构树</h3>
           </div>
+
           <KnowledgeTree onNodeClick={handleNodeSelect} onAddNode={(l1, l2) => {
             // Generate sequential ID based on L1 prefix (F, P, Q, etc.)
             let prefix = 'N';
@@ -461,18 +463,85 @@ export default function App() {
           />
         </div>
           
-        <div className="p-4 border-t border-gray-50 grid grid-cols-3 gap-2 bg-gray-50/30">
-          <div className="text-center">
-            <div className="text-[9px] text-slate-400 font-bold uppercase">概念</div>
-            <div className="text-xs font-bold text-indigo-600">{nodeStats.Concept}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[9px] text-slate-400 font-bold uppercase">规则</div>
-            <div className="text-xs font-bold text-orange-600">{nodeStats.Rule}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[9px] text-slate-400 font-bold uppercase">表示</div>
-            <div className="text-xs font-bold text-emerald-600">{nodeStats.Representation}</div>
+        <div className="p-4 border-t border-gray-50 bg-gray-50/30 relative">
+          <AnimatePresence>
+            {showTypeInfo && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="absolute bottom-full left-4 right-4 mb-2 bg-white/95 backdrop-blur shadow-xl rounded-2xl border border-slate-200 overflow-hidden z-30"
+              >
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">知识分类指南</span>
+                    <button onClick={() => setShowTypeInfo(false)} className="text-slate-300 hover:text-slate-600 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-4 text-[10px]">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                         <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-indigo-900 text-xs">概念 (Concept)</span>
+                          <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">是什么</span>
+                        </div>
+                        <div className="text-indigo-700/70 leading-relaxed">数学对象的本质定义、核心内涵与分类标准。它是构建知识体系的原子单元。</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                         <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-orange-900 text-xs">规则 (Rule)</span>
+                          <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">怎么用</span>
+                        </div>
+                        <div className="text-orange-700/70 leading-relaxed">定理、性质、推论、运算法则等逻辑规律。它描述了概念之间的动态交互与应用方式。</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                         <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-emerald-900 text-xs">表示 (Representation)</span>
+                          <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">怎么写</span>
+                        </div>
+                        <div className="text-emerald-700/70 leading-relaxed">符号系统 (集合记号)、图示方式 (Venn图)、表格、坐标等表达抽象思维的形式。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="p-4 border-t border-gray-50 grid grid-cols-3 gap-2 bg-gray-50/30 -mx-4 -mb-4 rounded-b-2xl relative">
+            <button 
+              onClick={() => setShowTypeInfo(!showTypeInfo)}
+              className="absolute -top-3 right-4 w-7 h-7 bg-white border border-slate-200 rounded-full shadow-sm flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all z-10"
+              title="查看分类说明"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+            <div className="text-center cursor-help group" onClick={() => setShowTypeInfo(true)}>
+              <div className="text-[9px] text-slate-400 font-bold uppercase transition-colors group-hover:text-indigo-500">概念</div>
+              <div className="text-xs font-bold text-indigo-600">{nodeStats.Concept}</div>
+            </div>
+            <div className="text-center cursor-help group" onClick={() => setShowTypeInfo(true)}>
+              <div className="text-[9px] text-slate-400 font-bold uppercase transition-colors group-hover:text-orange-500">规则</div>
+              <div className="text-xs font-bold text-orange-600">{nodeStats.Rule}</div>
+            </div>
+            <div className="text-center cursor-help group" onClick={() => setShowTypeInfo(true)}>
+              <div className="text-[9px] text-slate-400 font-bold uppercase transition-colors group-hover:text-emerald-500">表示</div>
+              <div className="text-xs font-bold text-emerald-600">{nodeStats.Representation}</div>
+            </div>
           </div>
         </div>
       </aside>
@@ -491,7 +560,13 @@ export default function App() {
                <div className="w-2 h-2 rounded-full bg-indigo-500" /> 周期性
              </div>
              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-               <div className="w-2 h-2 rounded-full bg-emerald-600" /> 对称性
+               <div className="w-2 h-2 rounded-full bg-purple-600" /> 指数函数
+             </div>
+             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+               <div className="w-2 h-2 rounded-full bg-emerald-600" /> 对数函数
+             </div>
+             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+               <div className="w-2 h-2 rounded-full bg-pink-600" /> 反函数
              </div>
           </div>
         </div>
