@@ -30,6 +30,11 @@ db.exec(`
     FOREIGN KEY (source) REFERENCES nodes (id) ON DELETE CASCADE,
     FOREIGN KEY (target) REFERENCES nodes (id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
 
 // Simple function to seed initial data if empty
@@ -122,6 +127,22 @@ async function startServer() {
   app.get('/api/relations', (req, res) => {
     const relations = db.prepare('SELECT * FROM relations').all();
     res.json(relations);
+  });
+
+  app.get('/api/settings/:key', (req, res) => {
+    const { key } = req.params;
+    const setting = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+    res.json(setting ? JSON.parse(setting.value) : null);
+  });
+
+  app.post('/api/settings', (req, res) => {
+    const { key, value } = req.body;
+    try {
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(value));
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
   });
 
   app.post('/api/relations', (req, res) => {

@@ -17,6 +17,7 @@ export default function App() {
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [relations, setRelations] = useState<Relation[]>([]);
+  const [l1Order, setL1Order] = useState<string[]>([]);
   const [isEditingNode, setIsEditingNode] = useState(false);
   const [editingNodeData, setEditingNodeData] = useState<Partial<Node>>({});
   const [isAddingNode, setIsAddingNode] = useState(false);
@@ -33,16 +34,32 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const [nodesRes, relationsRes] = await Promise.all([
+      const [nodesRes, relationsRes, orderRes] = await Promise.all([
         fetch('/api/nodes'),
-        fetch('/api/relations')
+        fetch('/api/relations'),
+        fetch('/api/settings/l1Order')
       ]);
       const nodesData = await nodesRes.json();
       const relationsData = await relationsRes.json();
+      const orderData = await orderRes.json();
       setNodes(nodesData);
       setRelations(relationsData);
+      if (orderData) setL1Order(orderData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
+    }
+  };
+
+  const saveL1Order = async (newOrder: string[]) => {
+    setL1Order(newOrder);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'l1Order', value: newOrder })
+      });
+    } catch (err) {
+      console.error('Failed to save L1 order:', err);
     }
   };
 
@@ -397,23 +414,29 @@ export default function App() {
             <h3 className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">结构树</h3>
           </div>
 
-          <KnowledgeTree onNodeClick={handleNodeSelect} onAddNode={(l1, l2) => {
-            // Generate sequential ID based on L1 prefix (F, P, Q, etc.)
-            let prefix = 'N';
-            if (l1.includes('函数的概念')) prefix = 'F';
-            else if (l1.includes('性质')) prefix = 'P';
-            else if (l1.includes('不等式') || l1.includes('方程')) prefix = 'Q';
-            
-            const existingIds = nodes.filter(n => n.id.startsWith(prefix)).map(n => {
-              const num = parseInt(n.id.substring(1));
-              return isNaN(num) ? 0 : num;
-            });
-            const nextNum = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-            const nextId = `${prefix}${nextNum.toString().padStart(3, '0')}`;
+          <KnowledgeTree 
+            onNodeClick={handleNodeSelect} 
+            onAddNode={(l1, l2) => {
+              // Generate sequential ID based on L1 prefix (F, P, Q, etc.)
+              let prefix = 'N';
+              if (l1.includes('函数的概念')) prefix = 'F';
+              else if (l1.includes('性质')) prefix = 'P';
+              else if (l1.includes('不等式') || l1.includes('方程')) prefix = 'Q';
+              
+              const existingIds = nodes.filter(n => n.id.startsWith(prefix)).map(n => {
+                const num = parseInt(n.id.substring(1));
+                return isNaN(num) ? 0 : num;
+              });
+              const nextNum = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+              const nextId = `${prefix}${nextNum.toString().padStart(3, '0')}`;
 
-            setIsAddingNode(true);
-            setEditingNodeData({ id: nextId, name: '', type: 'Concept', l1, l2, definition: '' });
-          }} nodes={nodes} />
+              setIsAddingNode(true);
+              setEditingNodeData({ id: nextId, name: '', type: 'Concept', l1, l2, definition: '' });
+            }} 
+            nodes={nodes} 
+            l1Order={l1Order}
+            onL1OrderChange={saveL1Order}
+          />
         </div>
 
         <div className="p-4 border-t border-gray-50 bg-gray-50/30 space-y-4">

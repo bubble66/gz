@@ -43,6 +43,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   '函数的零点与方程的解': '#EA580C', // Orange 600
   '二分法': '#D97706',           // Amber 600
   '函数模型及其应用': '#4B5563',   // Gray 600
+  // 第五章：三角函数
+  '任意角': '#F59E0B',             // Amber 500
+  '弧度制': '#D97706',             // Amber 600
+  '三角函数的定义': '#10B981',      // Emerald 500
+  '同角三角函数基本关系': '#059669', // Emerald 600
+  '诱导公式': '#047857',            // Emerald 700
+  '三角函数图像与性质': '#3B82F6',   // Blue 500
+  'y=Asin(ωx+φ)': '#2563EB',      // Blue 600
+  '三角恒等变换': '#1D4ED8',        // Blue 700
+  '三角函数模型': '#1E40AF',        // Blue 800
 };
 
 export interface KnowledgeGraphHandle {
