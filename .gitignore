@@ -6,5 +6,5 @@ coverage/
 *.log
 .env*
 !data/
-!data/knowledge.db
+!data/knowledgebase.sqlite
 !data/.gitkeep
