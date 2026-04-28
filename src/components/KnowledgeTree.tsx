@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, ChevronDown, BookOpen, Zap, Layers, Search, Plus, GripVertical } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ReactNode } from 'react';
 import { Node, NodeType } from '../data/knowledgeMap';
 import {
   DndContext,
@@ -31,6 +31,7 @@ interface TreeProps {
 }
 
 interface SortableItemProps {
+  key?: string | number;
   l1: string;
   nodes: Node[];
   filteredNodes: Node[];
@@ -42,7 +43,7 @@ interface SortableItemProps {
   onAddNode: (l1: string, l2: string) => void;
   onNodeClick: (node: Node) => void;
   getTypeLabel: (type: NodeType) => string;
-  getTypeIcon: (type: NodeType) => React.ReactNode;
+  getTypeIcon: (type: NodeType) => ReactNode;
   getTypeColor: (type: NodeType) => string;
 }
 
@@ -221,7 +222,7 @@ export default function KnowledgeTree({ onNodeClick, onAddNode, nodes, l1Order, 
     if (over && active.id !== over.id) {
       const oldIndex = orderedL1s.indexOf(active.id as string);
       const newIndex = orderedL1s.indexOf(over.id as string);
-      const newOrder = arrayMove(orderedL1s, oldIndex, newIndex);
+      const newOrder = arrayMove(orderedL1s, oldIndex, newIndex) as string[];
       onL1OrderChange(newOrder);
     }
   };
