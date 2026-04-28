@@ -8,7 +8,13 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database('knowledge.db');
+const dbPath = path.join(__dirname, 'data', 'knowledge.db');
+// Ensure data directory exists
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+}
+
+const db = new Database(dbPath);
 
 // Initialize database tables
 db.exec(`
